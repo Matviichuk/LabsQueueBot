@@ -2,7 +2,7 @@ from abc import ABC
 from typing import List, Optional
 import asyncio
 from .user import User
-from .url import Url
+from engine.commands.utils import Url
 
 
 class MeetingsSchedulerDelegate(ABC):
@@ -11,8 +11,8 @@ class MeetingsSchedulerDelegate(ABC):
 
 
 class MeetingRoom:
-    def __init__(self, deliverer: User, owner: User, location: Url):
-        self._deliverer = deliverer
+    def __init__(self, owner: User, location: Url):
+        self._deliverer = None
         self._owner = owner
         self._location = location
 
@@ -82,8 +82,11 @@ class MeetingsScheduler:
 
     async def insert_queue_observer(self, user: User) -> bool:
         if user in self.pending_queue:
-            self.pending_queue_observers.append(user)
-            return True
+            if user in self.pending_queue_observers:
+                return False
+            else:
+                self.pending_queue_observers.append(user)
+                return True
         return False
 
     async def remove_queue_observer(self, user: User) -> bool:
@@ -91,6 +94,36 @@ class MeetingsScheduler:
             self.pending_queue_observers.remove(user)
             return True
         return False
+
+    def _get_room_for_owner(self, owner: User) -> Optional[MeetingRoom]:
+        for room in self.rooms:
+            if room.owner is owner:
+                return room
+        return None
+
+    async def allocate_room(self, owner: User, location: Url) -> Optional[MeetingRoom]:
+        owned_room = self._get_room_for_owner(owner)
+        if owned_room is not None:
+            return owned_room
+        new_room = MeetingRoom(owner, location)
+        self.rooms.append(new_room)
+        await self._try_deliver()
+        return new_room
+
+    async def kick_deliverer_from_room(self, owner: User) -> bool:
+        owned_room = self._get_room_for_owner(owner)
+        if owned_room is not None:
+            owned_room.deliverer = None
+            await self._try_deliver()
+            return True
+        return False
+
+    async def close_room(self, owner: User) -> Optional[MeetingRoom]:
+        owned_room = self._get_room_for_owner(owner)
+        if owned_room is not None:
+            self.rooms.remove(owned_room)
+            return owned_room
+        return None
 
     async def _notify_participants(self, room):
         if self.delegate is None:
@@ -106,14 +139,17 @@ class MeetingsScheduler:
         if self.delegate is None:
             return
 
-        async def notify(user: User, index: int):
-            msg = f"New queue number is: {index}"
-            self.delegate.notify(user, msg)
-        send_operations = []
+        async def notify(deliverer: User, number: int):
+            msg = f"New queue number is: {number + 1}"
+            await self.delegate.notify(deliverer, msg)
+        send_operations = list()
         for user in self.pending_queue_observers:
-            index = self.pending_queue.index(user)
-            send_operations.append(notify(user, index))
-        await asyncio.gather(send_operations)
+            try:
+                index = self.pending_queue.index(user)
+                send_operations.append(notify(user, index))
+            except ValueError:
+                self.pending_queue_observers.remove(user)
+        await asyncio.gather(*send_operations)
 
     async def _try_deliver(self) -> bool:
         free_room = None
@@ -126,7 +162,7 @@ class MeetingsScheduler:
             deliverer = self.pending_queue[0]
 
         if free_room is not None and deliverer is not None:
-            self.remove_deliverer(deliverer)
+            await self.remove_deliverer(deliverer)
             free_room.deliverer = deliverer
             await self._notify_participants(free_room)
             await self._notify_observers()

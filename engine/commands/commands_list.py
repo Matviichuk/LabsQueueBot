@@ -6,3 +6,7 @@ from .help_command import HelpCommand
 from .ask_command import AskCommand
 from .start_notify_queue_change_command import StartNotifyQueueChangeCommand
 from .stop_notify_queue_change_command import StopNotifyQueueChangeCommand
+from .allocate_room_command import AllocateRoomCommand
+from .close_room_command import CloseRoomCommand
+from .kick_deliverer_command import KickDelivererCommand
+from .review_list_command import ReviewListCommand

@@ -26,13 +26,16 @@ class PrivilegeController(object):
         if policy.is_lecturer_policy():
             return [
                 cmd.StartCommand,
-                # insert new commands here
+                cmd.AllocateRoomCommand,
+                cmd.CloseRoomCommand,
+                cmd.KickDelivererCommand,
+                cmd.ReviewListCommand,
                 cmd.HelpCommand,
             ]
         elif policy.is_user_policy():
             return [
                 cmd.StartCommand,
-                cmd.AskCommand,
+                # cmd.AskCommand,
                 cmd.RegistrationCommand,
                 cmd.UnregistrationCommand,
                 cmd.StartNotifyQueueChangeCommand,

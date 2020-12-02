@@ -90,3 +90,30 @@ class CommandContextExecutor(Context):
         if await self.scheduler.remove_queue_observer(cmd.user):
             return "Successfully unsubscribed"
         return "You not observe queue now"
+
+    async def allocate_room(self, cmd: AllocateRoomCommand):
+        room = await self.scheduler.allocate_room(cmd.user, cmd.location)
+        if room.location == cmd.location:
+            return "Successfully allocated room"
+        return f"You have previous allocate room at:{room.location.location}"
+
+    async def close_room(self, cmd: CloseRoomCommand):
+        room = await self.scheduler.close_room(cmd.user)
+        if room is not None:
+            return f"Successfully close room at: {room.location.location}"
+        return "You not have allocated room"
+
+    async def kick_deliverer(self, cmd: KickDelivererCommand):
+        if await self.scheduler.kick_deliverer_from_room(cmd.user):
+            return None
+        else:
+            return f"Try kick without allocated room"
+
+    async def review_list(self, cmd: ReviewListCommand):
+        deliverers = self.scheduler.pending_queue
+        count = len(deliverers)
+        msg = f"count: {count}\n"
+        for i in range(0, count):
+            user = deliverers[i]
+            msg += f"{i + 1}. {user.name}, {user.nickname}"
+        return msg

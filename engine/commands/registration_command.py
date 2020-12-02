@@ -4,10 +4,9 @@ from .command import Command
 
 def _parse_lab_number(message: str) -> Optional[int]:
     command_name_len = len(RegistrationCommand.name)
-    command_part = message.find(RegistrationCommand.name) + command_name_len
-    tail = message[command_part:]
+    args = message[command_name_len + 1:]
     try:
-        return int(tail)
+        return int(args)
     except ValueError:
         return None
 

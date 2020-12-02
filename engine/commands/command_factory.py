@@ -13,6 +13,10 @@ class CommandFactory:
             AskCommand.name: AskCommand,
             StartNotifyQueueChangeCommand.name: StartNotifyQueueChangeCommand,
             StopNotifyQueueChangeCommand.name: StopNotifyQueueChangeCommand,
+            AllocateRoomCommand.name: AllocateRoomCommand,
+            CloseRoomCommand.name: CloseRoomCommand,
+            KickDelivererCommand.name: KickDelivererCommand,
+            ReviewListCommand.name: ReviewListCommand,
         }
 
     @staticmethod
