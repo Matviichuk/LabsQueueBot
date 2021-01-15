@@ -1,0 +1,2 @@
+# PRIVILEGED_USERS = [id, id]
+PRIVILEGED_USERS = []
