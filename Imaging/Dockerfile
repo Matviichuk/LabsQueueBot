@@ -9,13 +9,12 @@ RUN apt-get install git
 RUN pip install --upgrade pip
 
 # Clone code
-WORKDIR /app
-RUN git clone https://github.com/Matviichuk/LabsQueueBot.git origin
+RUN git clone https://github.com/Matviichuk/LabsQueueBot.git /origin
 
-# Setup environment
-WORKDIR /app/origin/
+## Setup environment
+WORKDIR /origin
 RUN pip install -r requirements.txt
 
 # Run App
-WORKDIR /app/origin/Sources
+WORKDIR /origin/Sources
 CMD python ./main.py
